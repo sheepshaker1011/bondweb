@@ -8,12 +8,12 @@ from sqlalchemy.orm import sessionmaker
 import pymysql
 import os, io
 import pandas as pd
-from bondapp import app
-from bondapp import db
+from bondweb import app
+from bondweb import db
 from .models import YaosuNex, Huizong, YaosuOthers
-import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+#import sys
+#reload(sys)
+#sys.setdefaultencoding('utf8')
 
 
 Session = sessionmaker(db.engine)
@@ -122,34 +122,34 @@ def extract_excel():
         file.save(path)
 
         df1 = pd.read_excel(path, header=None, sheet_name=0)
-	if not df1.empty:
-		df1 = df1.iloc[:,0:10]
-		df1.columns = ['trade_date', 'rem_period', 'bond_code', 'bond_name', 'bond_rating', 'bond_yield', 'note', 'offer', 'bid', 'amount']
-		df1['bond_yield'] = df1['bond_yield'].apply(lambda x: (float(x)*100) if (isfloat(x) and float(x)<1) else x)
-		df1 = df1[df1['bond_name'].notnull()]
-		# 处理 NaT：使用 to_datetime 将非 date 字符转换成 NaT，再用 strftime 将 NaT 转换成可以被 mysql 识别的 None
-		df1['trade_date'] = pd.to_datetime(df1['trade_date'], errors="coerce").apply(lambda x: x.strftime('%Y-%m-%d')if not pd.isnull(x) else None)
-		df1 = df1.where(df1.notnull(), None)
-		list2Write1 = df1.to_dict(orient="records")
-		session = Session()
-		session.execute(YaosuNex.__table__.insert(), list2Write1)
-		session.commit()
-		session.close()
+        if not df1.empty:
+            df1 = df1.iloc[:,0:10]
+            df1.columns = ['trade_date', 'rem_period', 'bond_code', 'bond_name', 'bond_rating', 'bond_yield', 'note', 'offer', 'bid', 'amount']
+            df1['bond_yield'] = df1['bond_yield'].apply(lambda x: (float(x)*100) if (isfloat(x) and float(x)<1) else x)
+            df1 = df1[df1['bond_name'].notnull()]
+            # 处理 NaT：使用 to_datetime 将非 date 字符转换成 NaT，再用 strftime 将 NaT 转换成可以被 mysql 识别的 None
+            df1['trade_date'] = pd.to_datetime(df1['trade_date'], errors="coerce").apply(lambda x: x.strftime('%Y-%m-%d')if not pd.isnull(x) else None)
+            df1 = df1.where(df1.notnull(), None)
+            list2Write1 = df1.to_dict(orient="records")
+            session = Session()
+            session.execute(YaosuNex.__table__.insert(), list2Write1)
+            session.commit()
+            session.close()
 
         df2 = pd.read_excel(path, header=None, sheet_name=1)	
-	if not df2.empty:
-		df2 = df2.iloc[:,0:10]
-		df2.columns = ['trade_date', 'rem_period', 'bond_code', 'bond_name', 'bond_rating', 'bond_yield', 'note', 'offer', 'bid']
-		df2 = df2[df2['bond_name'].notnull()]
-		# 处理 NaT：使用 to_datetime 将非 date 字符转换成 NaT，再用 strftime 将 NaT 转换成可以被 mysql 识别的 None
-		df2['trade_date'] = pd.to_datetime(df2['trade_date'], errors="coerce").apply(lambda x: x.strftime('%Y-%m-%d')if not pd.isnull(x) else None)
-		df2['note'] = '外部'
-		df2 = df2.where(df2.notnull(), None)
-		list2Write2 = df2.to_dict(orient="records")
-		session = Session()
-		session.execute(YaosuOthers.__table__.insert(), list2Write2)
-		session.commit()
-		session.close()        
+        if not df2.empty:
+            df2 = df2.iloc[:,0:10]
+            df2.columns = ['trade_date', 'rem_period', 'bond_code', 'bond_name', 'bond_rating', 'bond_yield', 'note', 'offer', 'bid']
+            df2 = df2[df2['bond_name'].notnull()]
+            # 处理 NaT：使用 to_datetime 将非 date 字符转换成 NaT，再用 strftime 将 NaT 转换成可以被 mysql 识别的 None
+            df2['trade_date'] = pd.to_datetime(df2['trade_date'], errors="coerce").apply(lambda x: x.strftime('%Y-%m-%d')if not pd.isnull(x) else None)
+            df2['note'] = '外部'
+            df2 = df2.where(df2.notnull(), None)
+            list2Write2 = df2.to_dict(orient="records")
+            session = Session()
+            session.execute(YaosuOthers.__table__.insert(), list2Write2)
+            session.commit()
+            session.close()        
 
         df3 = pd.read_excel(path, sheet_name=2, skiprows=3, header=None, usecols="B:F")
         dict_compname = {0:"国际", 1:"国利", 2:"BGC", 3:"平安", 4:"信唐"}

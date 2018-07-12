@@ -1,4 +1,4 @@
-from bondapp import db
+from bondweb import db
 
 class YaosuNex(db.Model):
   __tablename__ = 'YaosuNex'
